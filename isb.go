@@ -2,7 +2,6 @@ package main
 
 import (
 	"encoding/binary"
-	"log"
 	"os"
 )
 
@@ -53,12 +52,12 @@ func readISB(file *os.File) (*ISB, error) {
 }
 
 func (isb *ISB) Log() {
-	log.Println("Interface Statistics Block (ISB):")
-	log.Printf("\tBlock Type: %x\n", isb.BlockType)
-	log.Printf("\tBlock Total Length: %d\n", isb.BlockTotalLength)
-	log.Printf("\tInterfaceID: %x\n", isb.InterfaceID)
-	log.Printf("\tTimestampHigh: %d\n", isb.TimestampHigh)
-	log.Printf("\tTimestampLow: %d\n", isb.TimestampLow)
-	log.Println("\tOptions: Not Parsed for Now")
-	log.Printf("\tBTL: %d\n", isb.BTL)
+	// log.Println("Interface Statistics Block (ISB):")
+	// log.Printf("\tBlock Type: %x\n", isb.BlockType)
+	// log.Printf("\tBlock Total Length: %d\n", isb.BlockTotalLength)
+	// log.Printf("\tInterfaceID: %x\n", isb.InterfaceID)
+	// log.Printf("\tTimestampHigh: %d\n", isb.TimestampHigh)
+	// log.Printf("\tTimestampLow: %d\n", isb.TimestampLow)
+	// log.Println("\tOptions: Not Parsed for Now")
+	// log.Printf("\tBTL: %d\n", isb.BTL)
 }

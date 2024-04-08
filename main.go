@@ -6,11 +6,13 @@ import (
 	"os"
 )
 
+// Keep
 const (
 	Application = "jpcap"
 	Version     = "1.0.0"
 )
 
+// Keep
 func main() {
 
 	if err := usage(); err != nil {
@@ -34,6 +36,7 @@ func main() {
 	printStatistics() // Call after processing all packets
 }
 
+// Keep
 func usage() error {
 	log.Printf("Executing:\t%s\n", Application)
 	log.Printf("Version:\t%s\n", Version)
@@ -44,6 +47,7 @@ func usage() error {
 	return nil
 }
 
+// Keep
 func getFile() (*os.File, error) {
 	fileName := os.Args[1]
 	log.Printf("Opening:\t%s\n", fileName)
@@ -54,26 +58,40 @@ func getFile() (*os.File, error) {
 	return file, nil
 }
 
+// Keep
 func printStatistics() {
 	log.Println()
+
+	log.Printf("Total Blocks: %17d\n", blockCount)
+	log.Println()
+
+	log.Println("Block Types:")
+	for blockType, count := range blockTypes {
+		log.Printf("\t%-15s: %10d\n", blockType, count)
+	}
+	log.Println()
+
 	log.Println("Ethernet Types:")
-
-	//log.Printf("\t%v:", ethTypes)
-
 	for ethType, count := range ethTypes {
-		log.Printf("\t%s: %d\n", getEthernetType(ethType), count)
+		log.Printf("\t%-15s: %10d\n", getEthernetType(ethType), count)
 	}
 	log.Println()
 
-	log.Println("Protocol Counts:")
+	log.Println("IPV4 Counts:")
 	for protocol, count := range protocolCount {
-		log.Printf("\t%s: %d\n", protocol, count)
+		log.Printf("\t%-15s: %10d\n", protocol, count)
 	}
 	log.Println()
 
-	log.Println("TCP Packets by Source IP:")
+	log.Println("UDP Counts:")
+	for protocol, count := range udpTypes {
+		log.Printf("\t%-15s: %10d\n", protocol, count)
+	}
+	log.Println()
+
+	log.Println("TCP/IP Packets by Source IP:")
 	for ip, count := range tcpSourceCount {
-		log.Printf("\t%s: %d\n", ip, count)
+		log.Printf("\t%-15s: %10d\n", ip, count)
 	}
 	log.Println()
 }

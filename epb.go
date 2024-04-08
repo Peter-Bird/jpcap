@@ -24,6 +24,7 @@ var epbCount = 1
 
 var protocolCount map[string]int = make(map[string]int)
 var tcpSourceCount map[string]int = make(map[string]int)
+var udpTypes map[string]int = make(map[string]int)
 
 func readEPB(file *os.File) (*EPB, error) {
 
@@ -79,7 +80,7 @@ func DATALEN(length int64) int64 {
 }
 
 func (epb *EPB) Log() {
-	log.Printf("%d - Enhanced Packet Block (EPB):", epbCount)
+	//log.Printf("%d - Enhanced Packet Block (EPB):", epbCount)
 
 	// log.Printf("\tBlock Type: %x\n", epb.BlockType)
 	// log.Printf("\tBlock Total Length: %d\n", epb.BlockTotalLength)
@@ -155,6 +156,10 @@ func getProtocol(packetData []byte) {
 		if protocol == 6 { // TCP protocol number
 			getIp(packetData) // Call getIp specifically for TCP packets
 		}
+
+		if protocol == 17 { // UDP Protocol
+			analyzeUDP(packetData)
+		}
 	}
 }
 
@@ -165,19 +170,80 @@ func getProtocolName(protocol byte) string {
 	return "Unknown"
 }
 
-func getArpDetails(packetData []byte) {
-	if len(packetData) >= 42 { // 14 bytes Ethernet header + 28 bytes ARP header
-		senderMac := packetData[22:28]
-		senderIP := packetData[28:32]
-		targetMac := packetData[32:38]
-		targetIP := packetData[38:42]
-		log.Printf("\tARP - Sender MAC: %02x:%02x:%02x:%02x:%02x:%02x, Sender IP: %d.%d.%d.%d\n",
-			senderMac[0], senderMac[1], senderMac[2], senderMac[3], senderMac[4], senderMac[5],
-			senderIP[0], senderIP[1], senderIP[2], senderIP[3])
-		log.Printf("\tARP - Target MAC: %02x:%02x:%02x:%02x:%02x:%02x, Target IP: %d.%d.%d.%d\n",
-			targetMac[0], targetMac[1], targetMac[2], targetMac[3], targetMac[4], targetMac[5],
-			targetIP[0], targetIP[1], targetIP[2], targetIP[3])
+func analyzeUDP(packetData []byte) string {
+	_, dstPort, err := getPorts(packetData)
+	if err != nil {
+		log.Printf("%s\n", err.Error())
+		return ""
 	}
+
+	udpProtocol := UDPProtocols[int(dstPort)]
+	countUDPTypes(udpProtocol)
+
+	return udpProtocol
+}
+
+func countUDPTypes(udpType string) {
+	udpTypes[udpType]++
+}
+
+// This function assumes the packet is an IPv4 TCP/UDP packet.
+// It will return the source and destination ports along with any error encountered.
+func getPorts(packet []byte) (srcPort, dstPort uint16, err error) {
+	// Minimum length check for Ethernet header + IPv4 header (14 + 20 bytes)
+	if len(packet) < 34 {
+		return 0, 0, fmt.Errorf("packet too short to include Ethernet and IPv4 headers")
+	}
+
+	// Start reading the IPv4 packet after the Ethernet header
+	ipStart := 14
+
+	// Check if it is actually IPv4 (version 4 should be the first 4 bits of the byte after Ethernet header)
+	version := packet[ipStart] >> 4
+	if version != 4 {
+		return 0, 0, fmt.Errorf("packet is not IPv4")
+	}
+
+	// Get the IP header length (IHL)
+	ihl := packet[ipStart] & 0x0F
+	ipHeaderLength := int(ihl) * 4
+
+	// Ensure the total length is enough for IP header + TCP/UDP header
+	if len(packet) < ipStart+ipHeaderLength+8 {
+		return 0, 0, fmt.Errorf("packet too short for valid TCP/UDP data")
+	}
+
+	// Protocol number to check if TCP or UDP
+	protocol := packet[ipStart+9]
+
+	// TCP (6) and UDP (17) check
+	if protocol != 6 && protocol != 17 {
+		return 0, 0, fmt.Errorf("protocol is not TCP or UDP")
+	}
+
+	// Calculate the offset to the TCP/UDP header
+	tcpUdpHeaderStart := ipStart + ipHeaderLength
+
+	// Extract source and destination ports
+	srcPort = binary.BigEndian.Uint16(packet[tcpUdpHeaderStart : tcpUdpHeaderStart+2])
+	dstPort = binary.BigEndian.Uint16(packet[tcpUdpHeaderStart+2 : tcpUdpHeaderStart+4])
+
+	return srcPort, dstPort, nil
+}
+
+func getArpDetails(packetData []byte) {
+	// if len(packetData) >= 42 { // 14 bytes Ethernet header + 28 bytes ARP header
+	// 	senderMac := packetData[22:28]
+	// 	senderIP := packetData[28:32]
+	// 	targetMac := packetData[32:38]
+	// 	targetIP := packetData[38:42]
+	// 	log.Printf("\tARP - Sender MAC: %02x:%02x:%02x:%02x:%02x:%02x, Sender IP: %d.%d.%d.%d\n",
+	// 		senderMac[0], senderMac[1], senderMac[2], senderMac[3], senderMac[4], senderMac[5],
+	// 		senderIP[0], senderIP[1], senderIP[2], senderIP[3])
+	// 	log.Printf("\tARP - Target MAC: %02x:%02x:%02x:%02x:%02x:%02x, Target IP: %d.%d.%d.%d\n",
+	// 		targetMac[0], targetMac[1], targetMac[2], targetMac[3], targetMac[4], targetMac[5],
+	// 		targetIP[0], targetIP[1], targetIP[2], targetIP[3])
+	// }
 }
 
 func checkForSTP(packetData []byte, etherType uint16) {
@@ -187,7 +253,7 @@ func checkForSTP(packetData []byte, etherType uint16) {
 
 	switch destinationMac {
 	case "01:80:c2:00:00:00", "01:00:0c:cc:cc:cd":
-		log.Println("\tDetected STP Packet")
+		//log.Println("\tDetected STP Packet")
 	default:
 		log.Printf("\tUnknown Ethernet Type: %x\n", etherType)
 	}
@@ -213,10 +279,10 @@ func logICMPv6Details(packetData []byte) {
 		return
 	}
 
-	icmpType := packetData[54] // ICMPv6 Type
-	icmpCode := packetData[55] // ICMPv6 Code
+	// icmpType := packetData[54] // ICMPv6 Type
+	// icmpCode := packetData[55] // ICMPv6 Code
 
-	log.Printf("\tICMPv6 Type: %d, Code: %d\n", icmpType, icmpCode)
+	// log.Printf("\tICMPv6 Type: %d, Code: %d\n", icmpType, icmpCode)
 }
 
 func logLLDPDetails(packetData []byte) {
@@ -226,5 +292,5 @@ func logLLDPDetails(packetData []byte) {
 	}
 
 	// LLDP packet processing could be expanded here. For now, we log a simple message.
-	log.Println("\tDetected LLDP Packet")
+	//log.Println("\tDetected LLDP Packet")
 }

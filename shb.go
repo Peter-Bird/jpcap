@@ -4,7 +4,7 @@ import (
 	"encoding/binary"
 
 	//	"io"
-	"log"
+
 	"os"
 )
 
@@ -58,13 +58,13 @@ func readSHB(file *os.File) (*SHB, error) {
 }
 
 func (shb *SHB) Log() {
-	log.Println("Section Header Block (SHB):")
-	log.Printf("\tBlock Type: %x\n", shb.BlockType)
-	log.Printf("\tBlock Total Length: %d\n", shb.BlockTotalLength)
-	log.Printf("\tByte Order Magic: %x\n", shb.ByteOrderMagic)
-	log.Printf("\tMajor Version: %d\n", shb.MajorVersion)
-	log.Printf("\tMinor Version: %d\n", shb.MinorVersion)
-	log.Printf("\tSection Length: %d\n", shb.SectionLength)
-	log.Println("\tOptions: Not Parsed for Now")
-	log.Printf("\tBTL: %d\n", shb.BTL)
+	// log.Println("Section Header Block (SHB):")
+	// log.Printf("\tBlock Type: %x\n", shb.BlockType)
+	// log.Printf("\tBlock Total Length: %d\n", shb.BlockTotalLength)
+	// log.Printf("\tByte Order Magic: %x\n", shb.ByteOrderMagic)
+	// log.Printf("\tMajor Version: %d\n", shb.MajorVersion)
+	// log.Printf("\tMinor Version: %d\n", shb.MinorVersion)
+	// log.Printf("\tSection Length: %d\n", shb.SectionLength)
+	// log.Println("\tOptions: Not Parsed for Now")
+	// log.Printf("\tBTL: %d\n", shb.BTL)
 }

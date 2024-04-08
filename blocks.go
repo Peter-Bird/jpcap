@@ -11,6 +11,14 @@ type Block interface {
 	Log()
 }
 
+var blockCount = 0
+
+var blockTypes map[string]int = make(map[string]int)
+
+func countNlockTypes(bType string) {
+	blockTypes[bType]++
+}
+
 func analyzeBlocks(file *os.File) {
 
 	log.Printf("Analyzing file\n")
@@ -44,6 +52,8 @@ func analyzeBlocks(file *os.File) {
 				fmt.Sprintf("Error reading block:%s - %v\n", blockType, err),
 			)
 		}
+		countNlockTypes(blockType)
+		blockCount++
 
 		block.Log()
 	}
@@ -77,6 +87,7 @@ func isSupported(blockType string) bool {
 		return false
 	}
 
-	log.Printf("Block Type:\t%s\n\n", blockType)
+	log.Printf("Magic #:\t%s\n", blockType)
+	log.Println()
 	return true
 }

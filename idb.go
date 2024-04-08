@@ -2,7 +2,6 @@ package main
 
 import (
 	"encoding/binary"
-	"log"
 	"os"
 )
 
@@ -53,12 +52,12 @@ func readIDB(file *os.File) (*IDB, error) {
 }
 
 func (idb *IDB) Log() {
-	log.Println("Interface Description Block (IDB):")
-	log.Printf("\tBlock Type: %x\n", idb.BlockType)
-	log.Printf("\tBlock Total Length: %d\n", idb.BlockTotalLength)
-	log.Printf("\tLinkType: %x\n", idb.LinkType)
-	log.Printf("\tReserved: %d\n", idb.Reserved)
-	log.Printf("\tSnapLen: %d\n", idb.SnapLen)
-	log.Println("\tOptions: Not Parsed for Now")
-	log.Printf("\tBTL: %d\n", idb.BTL)
+	// log.Println("Interface Description Block (IDB):")
+	// log.Printf("\tBlock Type: %x\n", idb.BlockType)
+	// log.Printf("\tBlock Total Length: %d\n", idb.BlockTotalLength)
+	// log.Printf("\tLinkType: %x\n", idb.LinkType)
+	// log.Printf("\tReserved: %d\n", idb.Reserved)
+	// log.Printf("\tSnapLen: %d\n", idb.SnapLen)
+	// log.Println("\tOptions: Not Parsed for Now")
+	// log.Printf("\tBTL: %d\n", idb.BTL)
 }
