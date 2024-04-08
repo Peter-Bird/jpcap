@@ -80,7 +80,7 @@ func DATALEN(length int64) int64 {
 
 func (epb *EPB) Log() {
 	log.Printf("%d - Enhanced Packet Block (EPB):", epbCount)
-	epbCount++
+
 	// log.Printf("\tBlock Type: %x\n", epb.BlockType)
 	// log.Printf("\tBlock Total Length: %d\n", epb.BlockTotalLength)
 	// log.Printf("\tInterfaceID: %d\n", epb.InterfaceID)
@@ -88,18 +88,27 @@ func (epb *EPB) Log() {
 	// log.Printf("\tTimestampLow: %d\n", epb.TimestampLow)
 	// log.Printf("\tCapturedPacketLength: %d\n", epb.CapturedPacketLength)
 	// log.Printf("\tOriginalPacketLength: %d\n", epb.OriginalPacketLength)
-	checkPacketType(epb.PacketData)
+	checkPacketType(epb.PacketData, epbCount)
 	// log.Println("\tOptions: Not Parsed for Now")
 	// log.Printf("\tBTL: %d\n", epb.BTL)
+	epbCount++
 }
 
-func checkPacketType(packetData []byte) {
+var ethTypes = make(map[uint16]int)
+
+func checkPacketType(packetData []byte, num int) {
 	if len(packetData) < 14 {
 		log.Println("\tError: Packet too short to determine type")
 		return
 	}
 
 	etherType := binary.BigEndian.Uint16(packetData[12:14])
+	countEthTypes(etherType)
+
+	if etherType == 39 {
+		fmt.Printf("%d, %v\n", num, packetData)
+	}
+
 	switch etherType {
 	case 0x0800:
 		getIp(packetData)
@@ -115,11 +124,24 @@ func checkPacketType(packetData []byte) {
 	}
 }
 
+func getEthernetType(eType uint16) string {
+	if name, exists := EthernetTypes[eType]; exists {
+		return name
+	}
+	log.Println(eType)
+
+	return "Unknown"
+}
+
+func countEthTypes(eType uint16) {
+	ethTypes[eType]++
+}
+
 func getIp(packetData []byte) {
 	if len(packetData) >= 34 { // 14 bytes Ethernet + 20 bytes minimum IP header
 		senderIP := fmt.Sprintf("%d.%d.%d.%d", packetData[26], packetData[27], packetData[28], packetData[29])
 		tcpSourceCount[senderIP]++ // Count TCP packets by source IP
-		log.Printf("\tSender IP: %s\n", senderIP)
+		//log.Printf("\tSender IP: %s\n", senderIP)
 	}
 }
 
@@ -128,7 +150,7 @@ func getProtocol(packetData []byte) {
 		protocol := packetData[23] // 14 bytes Ethernet header + 9 bytes to the protocol field
 		protocolName := getProtocolName(protocol)
 		protocolCount[protocolName]++ // Count each protocol occurrence
-		log.Printf("\tProtocol: %s (%d)\n", protocolName, protocol)
+		//log.Printf("\tProtocol: %s (%d)\n", protocolName, protocol)
 
 		if protocol == 6 { // TCP protocol number
 			getIp(packetData) // Call getIp specifically for TCP packets
@@ -137,20 +159,7 @@ func getProtocol(packetData []byte) {
 }
 
 func getProtocolName(protocol byte) string {
-	protocolMap := map[byte]string{
-		1:   "ICMP",
-		2:   "IGMP",
-		6:   "TCP",
-		17:  "UDP",
-		41:  "IPv6 Encapsulation",
-		47:  "GRE",
-		50:  "ESP",
-		51:  "AH",
-		89:  "OSPF",
-		115: "L2TP",
-	}
-
-	if name, exists := protocolMap[protocol]; exists {
+	if name, exists := ProtocolMap[protocol]; exists {
 		return name
 	}
 	return "Unknown"

@@ -55,13 +55,25 @@ func getFile() (*os.File, error) {
 }
 
 func printStatistics() {
+	log.Println()
+	log.Println("Ethernet Types:")
+
+	//log.Printf("\t%v:", ethTypes)
+
+	for ethType, count := range ethTypes {
+		log.Printf("\t%s: %d\n", getEthernetType(ethType), count)
+	}
+	log.Println()
+
 	log.Println("Protocol Counts:")
 	for protocol, count := range protocolCount {
 		log.Printf("\t%s: %d\n", protocol, count)
 	}
+	log.Println()
 
 	log.Println("TCP Packets by Source IP:")
 	for ip, count := range tcpSourceCount {
 		log.Printf("\t%s: %d\n", ip, count)
 	}
+	log.Println()
 }
